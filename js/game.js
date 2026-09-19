@@ -4,12 +4,18 @@
 // this with the Adaptive Behaviour Engine (tap latency, hesitation,
 // error clustering) described in the problem statement.
 //
-// ACCURACY DEFINITION (important):
+// ACCURACY DEFINITION:
 // A wrong guess only counts against you if you'd already seen the
 // matching tile at some earlier point in the round — i.e. you had
 // the information and failed to recall it. A wrong guess on tiles
 // you're seeing for the very first time is exploration, not a
 // memory failure, and does not lower accuracy.
+//
+// PERSONALIZATION:
+// If a caregiver has uploaded 4+ photos (see caregiver.js), the game
+// uses those instead of the default cultural-icon set. Both card
+// "flavours" are normalised to the same {key, name} shape so the
+// rest of the game logic doesn't need to know which one is active.
 
 const Game = (() => {
   const ICON_POOL = [
@@ -23,15 +29,16 @@ const Game = (() => {
     { icon: "🏔️", name: "Hills" },
   ];
 
+  const MIN_CUSTOM_PHOTOS = 4;
   const MAX_ROUND = 2;
   let round = parseInt(localStorage.getItem("gameRound") || "1", 10);
 
   let board = [];
   let flippedIndices = [];
-  let seenIndices = new Set(); // tiles revealed at least once in a PREVIOUS turn
+  let seenIndices = new Set();
   let matchedCount = 0;
   let moves = 0;
-  let recallMisses = 0; // wrong guesses where the match was already known
+  let recallMisses = 0;
   let lockBoard = false;
 
   const boardEl = () => document.getElementById("game-board");
@@ -46,10 +53,32 @@ const Game = (() => {
     return arr;
   }
 
+  function getCustomPhotos() {
+    try {
+      return JSON.parse(localStorage.getItem("customPhotos") || "[]");
+    } catch {
+      return [];
+    }
+  }
+
+  function buildSourceSet(pairCount) {
+    const photos = getCustomPhotos();
+    if (photos.length >= MIN_CUSTOM_PHOTOS) {
+      const chosen = shuffle([...photos]).slice(0, pairCount);
+      return chosen.map((dataUrl, i) => ({
+        type: "photo",
+        key: dataUrl,
+        name: `Family photo ${i + 1}`,
+      }));
+    }
+    const chosen = shuffle([...ICON_POOL]).slice(0, pairCount);
+    return chosen.map((item) => ({ type: "emoji", key: item.icon, name: item.name }));
+  }
+
   function buildDeck() {
     const pairCount = round >= 2 ? 6 : 4;
-    const chosen = shuffle([...ICON_POOL]).slice(0, pairCount);
-    const deck = shuffle([...chosen, ...chosen]).map((item, idx) => ({
+    const source = buildSourceSet(pairCount);
+    const deck = shuffle([...source, ...source]).map((item, idx) => ({
       ...item,
       id: idx,
       matched: false,
@@ -64,12 +93,19 @@ const Game = (() => {
       const tile = document.createElement("button");
       tile.className = "card-tile face-down";
       tile.dataset.idx = idx;
-      tile.textContent = "";
       tile.addEventListener("click", () => handleFlip(idx));
       el.appendChild(tile);
     });
     roundEl().textContent = round;
     statusEl().textContent = "";
+  }
+
+  function setTileContent(tile, card) {
+    if (card.type === "photo") {
+      tile.innerHTML = `<img src="${card.key}" alt="${card.name}" class="tile-photo" />`;
+    } else {
+      tile.textContent = card.key;
+    }
   }
 
   function handleFlip(idx) {
@@ -85,7 +121,7 @@ const Game = (() => {
       moves++;
       lockBoard = true;
       const [a, b] = flippedIndices;
-      const isMatch = board[a].icon === board[b].icon;
+      const isMatch = board[a].key === board[b].key;
 
       if (isMatch) {
         setTimeout(() => {
@@ -99,10 +135,8 @@ const Game = (() => {
           if (matchedCount === board.length) finishRound();
         }, 350);
       } else {
-        // Was the match for EITHER flipped card already known from a
-        // previous turn? If so, this wrong guess is a real recall miss.
-        const knewA = seenIndices.has(a) || wasIconSeenElsewhere(board[a].icon, a);
-        const knewB = seenIndices.has(b) || wasIconSeenElsewhere(board[b].icon, b);
+        const knewA = seenIndices.has(a) || wasKeySeenElsewhere(board[a].key, a);
+        const knewB = seenIndices.has(b) || wasKeySeenElsewhere(board[b].key, b);
         if (knewA || knewB) recallMisses++;
 
         setTimeout(() => {
@@ -117,11 +151,9 @@ const Game = (() => {
     }
   }
 
-  // True if some OTHER tile with the same icon was already revealed
-  // in an earlier turn (i.e. the player had a chance to remember it).
-  function wasIconSeenElsewhere(icon, excludeIdx) {
+  function wasKeySeenElsewhere(key, excludeIdx) {
     for (const seenIdx of seenIndices) {
-      if (seenIdx !== excludeIdx && board[seenIdx].icon === icon) return true;
+      if (seenIdx !== excludeIdx && board[seenIdx].key === key) return true;
     }
     return false;
   }
@@ -129,13 +161,13 @@ const Game = (() => {
   function revealTile(idx) {
     const tile = boardEl().querySelector(`[data-idx="${idx}"]`);
     tile.classList.remove("face-down");
-    tile.textContent = board[idx].icon;
+    setTileContent(tile, board[idx]);
   }
 
   function hideTile(idx) {
     const tile = boardEl().querySelector(`[data-idx="${idx}"]`);
     tile.classList.add("face-down", "wrong");
-    tile.textContent = "";
+    tile.innerHTML = "";
     setTimeout(() => tile.classList.remove("wrong"), 300);
   }
 
@@ -147,16 +179,12 @@ const Game = (() => {
 
   function finishRound() {
     const pairs = board.length / 2;
-    // Accuracy now reflects recall quality, not raw guess count:
-    // every pair you matched counts as a success; every recall miss
-    // (a wrong guess where you'd already seen the match) counts against it.
     const accuracy = Math.round((pairs / (pairs + recallMisses)) * 100);
 
     logSession(accuracy, pairs);
     Voice.speak(`Well done! You matched everything. Accuracy ${accuracy} percent.`);
     statusEl().textContent = `Well done! Accuracy: ${accuracy}%`;
 
-    // Hardcoded adaptive rule: strong recall -> harder next round.
     if (accuracy >= 70 && round < MAX_ROUND) {
       round++;
     } else if (accuracy < 40 && round > 1) {
@@ -196,5 +224,12 @@ const Game = (() => {
     startRound();
   }
 
-  return { init };
+  // Called by the caregiver dashboard after photos are added/cleared,
+  // so a fresh round picks up the change immediately if a patient
+  // navigates back into the Games tab.
+  function refresh() {
+    if (boardEl()) startRound();
+  }
+
+  return { init, refresh };
 })();

@@ -14,36 +14,46 @@ npx serve .
 python3 -m http.server 8000
 ```
 
-Caregiver PIN for the demo: **1234**
+First launch asks for the patient's name and a caregiver PIN (this is now real, not hardcoded). Use the "Reset demo profile" link on the landing screen to re-run onboarding for repeat demos.
 
 ## Structure
 
 ```
 sih26003-poc/
-├── index.html          All screens (landing, patient tabs, caregiver PIN + dashboard)
+├── index.html          All screens (onboarding, welcome, landing, patient tabs, caregiver PIN + dashboard)
+├── manifest.json        PWA install config
+├── sw.js                Service worker — cache-first offline support
+├── icons/                App icons (svg + png, 192/512)
 ├── css/
 │   └── style.css        Design tokens + layout
 └── js/
-    ├── voice.js          Web Speech API wrapper (voice-guidance button)
-    ├── game.js           Memory-match game + hardcoded adaptive difficulty
-    ├── tasks.js           Daily routine checklist (localStorage-backed)
+    ├── profile.js         First-run patient name + caregiver PIN
+    ├── voice.js           Web Speech API wrapper (voice-guidance button)
+    ├── game.js            Memory-match game + recall-based adaptive difficulty + photo personalization
+    ├── tasks.js           Caregiver-editable task list (localStorage-backed)
+    ├── reminders.js        Time-based task reminders (in-app toast / OS notification)
     ├── memories.js        Memories/Songs hub + mood check-in
-    ├── caregiver.js        PIN check + dashboard rendering
-    └── app.js             Screen/tab routing, wires all modules together
+    ├── caregiver.js        PIN check, dashboard, task manager, photo upload
+    └── app.js             Screen/tab routing, onboarding + welcome flow, wires all modules together
 ```
+
+**Note on testing offline/install:** service workers and "Add to Home Screen" only work over `https://` or true `localhost` — a LAN IP like `http://192.168.x.x` will silently fail both. Use `http://localhost:PORT` on the same machine, or deploy to GitHub Pages for phone testing.
 
 ## What's real vs. mocked in this POC
 
 | Feature | POC | Full build (see tech stack doc) |
 |---|---|---|
-| Cognitive games | 1 of 4 (Memory Match) | All 4 games |
-| Adaptive difficulty | Hardcoded accuracy threshold | ML-based Adaptive Behaviour Engine (latency, hesitation, error clustering) |
-| Voice guidance | Web Speech API (English) | Pre-recorded native audio in Assamese/Bengali/Khasi/Manipuri |
-| Multilingual UI | English only | i18next-driven, NER languages |
+| Cognitive games | 1 of 4 (Memory Match), with optional photo personalization | All 4 games |
+| Adaptive difficulty | Hardcoded accuracy threshold, using a real recall-vs-guess accuracy metric | ML-based Adaptive Behaviour Engine (latency, hesitation, error clustering) |
+| Voice guidance | Web Speech API (English) | Pre-recorded native audio in Assamese/Bengali/Bodo/Manipuri via Bhashini TTS |
+| Multilingual UI | English only | Bhashini-translated static UI strings, NER languages |
 | Data storage | Browser localStorage | IndexedDB (Dexie) on-device + PostgreSQL backend sync |
-| Caregiver auth | Static 4-digit PIN | Proper account auth (Firebase/JWT) |
+| Caregiver auth | PIN set during first-run onboarding | Proper account auth (Firebase/JWT) |
+| Task reminders | In-app toast (or OS notification if backgrounded), checked every 20s | Push notifications via backend scheduler |
+| Offline support | Service worker caches full app shell — works with no connectivity after first load | Same principle, extended to full data sync on reconnect |
 | Memories/Songs content | Placeholder cards, spoken confirmation | Real family-uploaded photos/audio, regional music library |
 | Dashboard trend | Mock 6-day history + today's real session | Full historical analytics from backend |
+| Multi-device sync | None — single device/browser only | Backend sync layer, deliberately out of scope for this POC |
 
 ## Why this scope
 

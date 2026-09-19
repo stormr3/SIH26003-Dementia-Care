@@ -42,6 +42,54 @@ function showTab(tabName) {
   document.getElementById("patient-heading").textContent = TAB_HEADINGS[tabName];
 }
 
+function goToPatientWithWelcome() {
+  const profile = Profile.get();
+  const name = profile ? profile.name : "there";
+  document.getElementById("welcome-name").textContent = name;
+  showScreen("welcome");
+  Voice.speak(`Welcome, ${name}!`);
+
+  let advanced = false;
+  const advance = () => {
+    if (advanced) return;
+    advanced = true;
+    showScreen("patient");
+  };
+  const timer = setTimeout(advance, 1800);
+  const screen = document.getElementById("screen-welcome");
+  const tapHandler = () => {
+    clearTimeout(timer);
+    advance();
+    screen.removeEventListener("click", tapHandler);
+  };
+  screen.addEventListener("click", tapHandler);
+}
+
+function submitSetup() {
+  const name = document.getElementById("setup-name").value.trim();
+  const pin = document.getElementById("setup-pin").value.trim();
+  const confirmPin = document.getElementById("setup-pin-confirm").value.trim();
+  const errorEl = document.getElementById("setup-error");
+
+  if (!name) return (errorEl.textContent = "Please enter the patient's name.");
+  if (!/^\d{4}$/.test(pin)) return (errorEl.textContent = "PIN must be exactly 4 digits.");
+  if (pin !== confirmPin) return (errorEl.textContent = "PINs do not match.");
+
+  Profile.save(name, pin);
+  errorEl.textContent = "";
+  showScreen("landing");
+}
+
+function submitPin() {
+  const value = document.getElementById("pin-input").value.trim();
+  if (Caregiver.checkPin(value)) {
+    showScreen("caregiver-dashboard");
+  } else {
+    document.getElementById("pin-error").textContent = "Incorrect PIN.";
+    document.getElementById("pin-input").value = "";
+  }
+}
+
 function wireNavigation() {
   document.querySelectorAll("[data-goto]").forEach((el) => {
     el.addEventListener("click", () => showScreen(el.dataset.goto));
@@ -53,20 +101,22 @@ function wireNavigation() {
 
   document.getElementById("voice-btn").addEventListener("click", Voice.readActiveScreen);
 
+  document.getElementById("btn-i-am-patient").addEventListener("click", goToPatientWithWelcome);
+
+  document.getElementById("setup-submit").addEventListener("click", submitSetup);
+  document.getElementById("setup-pin-confirm").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") submitSetup();
+  });
+
   document.getElementById("pin-submit").addEventListener("click", submitPin);
   document.getElementById("pin-input").addEventListener("keydown", (e) => {
     if (e.key === "Enter") submitPin();
   });
-}
 
-function submitPin() {
-  const value = document.getElementById("pin-input").value.trim();
-  if (Caregiver.checkPin(value)) {
-    showScreen("caregiver-dashboard");
-  } else {
-    document.getElementById("pin-error").textContent = "Incorrect PIN. Try 1234 for this demo.";
-    document.getElementById("pin-input").value = "";
-  }
+  document.getElementById("reset-profile-link").addEventListener("click", () => {
+    Profile.reset();
+    location.reload();
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -74,5 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
   Game.init();
   Tasks.init();
   Memories.init();
-  showTab("games"); // sets initial heading + data-speak
+  Reminders.init();
+  showTab("games");
+  showScreen(Profile.exists() ? "landing" : "onboarding");
 });

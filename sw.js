@@ -4,7 +4,7 @@
 // the piece that turns "offline-first" from a slide claim into a thing
 // you can demo live by toggling airplane mode.
 
-const CACHE_NAME = "sahayak-poc-v1";
+const CACHE_NAME = "sahayak-poc-v2";
 
 const ASSETS = [
   "./",
@@ -13,8 +13,10 @@ const ASSETS = [
   "./css/style.css",
   "./js/app.js",
   "./js/voice.js",
+  "./js/profile.js",
   "./js/game.js",
   "./js/tasks.js",
+  "./js/reminders.js",
   "./js/memories.js",
   "./js/caregiver.js",
   "./icons/icon.svg",
@@ -24,7 +26,18 @@ const ASSETS = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const results = await Promise.allSettled(
+        ASSETS.map((url) => cache.add(url))
+      );
+      results.forEach((r, i) => {
+        if (r.status === "rejected") {
+          console.warn("[sw] failed to cache:", ASSETS[i], r.reason);
+        }
+      });
+      const okCount = results.filter((r) => r.status === "fulfilled").length;
+      console.log(`[sw] cached ${okCount}/${ASSETS.length} assets`);
+    })
   );
   self.skipWaiting();
 });
@@ -38,6 +51,16 @@ self.addEventListener("activate", (event) => {
       )
   );
   self.clients.claim();
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: "window" }).then((clients) => {
+      if (clients.length > 0) return clients[0].focus();
+      return self.clients.openWindow("./index.html");
+    })
+  );
 });
 
 self.addEventListener("fetch", (event) => {

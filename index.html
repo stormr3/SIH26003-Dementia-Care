@@ -11,13 +11,49 @@
 </head>
 <body>
 
-<!-- Floating voice-guidance button, visible on every screen except the very first choice -->
 <button id="voice-btn" class="voice-btn hidden" aria-label="Read this screen aloud">🔊</button>
+
+<div id="reminder-toast" class="reminder-toast hidden">
+  <span id="reminder-toast-text"></span>
+  <button id="reminder-toast-dismiss" aria-label="Dismiss">✕</button>
+</div>
 
 <main id="app">
 
+  <!-- ============ ONBOARDING: first-run profile setup ============ -->
+  <section id="screen-onboarding" class="screen">
+    <div class="onboarding-wrap">
+      <div class="brand">
+        <span class="brand-mark">◆</span>
+        <h1>Welcome to Sahayak</h1>
+        <p class="tagline">Let's get set up — this takes a minute</p>
+      </div>
+      <label class="field-label" for="setup-name">Patient's name</label>
+      <input id="setup-name" class="text-input" type="text" placeholder="e.g. Priya Deka" />
+
+      <label class="field-label" for="setup-pin">Set a 4-digit caregiver PIN</label>
+      <input id="setup-pin" class="pin-input small" type="password" inputmode="numeric" maxlength="4" placeholder="••••" />
+
+      <label class="field-label" for="setup-pin-confirm">Confirm PIN</label>
+      <input id="setup-pin-confirm" class="pin-input small" type="password" inputmode="numeric" maxlength="4" placeholder="••••" />
+
+      <p id="setup-error" class="pin-error"></p>
+      <button id="setup-submit" class="primary-btn">Get Started</button>
+    </div>
+  </section>
+
+  <!-- ============ WELCOME transition ============ -->
+  <section id="screen-welcome" class="screen">
+    <div class="welcome-wrap">
+      <span class="brand-mark">◆</span>
+      <h1>Welcome, <span id="welcome-name">there</span>!</h1>
+      <p class="tagline">Let's get started</p>
+      <p class="tap-hint">(tap to continue)</p>
+    </div>
+  </section>
+
   <!-- ============ LANDING: role selection ============ -->
-  <section id="screen-landing" class="screen active">
+  <section id="screen-landing" class="screen">
     <div class="landing-wrap">
       <div class="brand">
         <span class="brand-mark">◆</span>
@@ -25,7 +61,7 @@
         <p class="tagline">Cognitive care, close to home</p>
       </div>
       <div class="role-choice">
-        <button class="role-card role-patient" data-goto="patient">
+        <button class="role-card role-patient" id="btn-i-am-patient">
           <span class="role-icon">🧓</span>
           <span class="role-title">I am the Patient</span>
           <span class="role-sub">Play, remember, feel good</span>
@@ -37,6 +73,7 @@
         </button>
       </div>
       <p class="ps-tag">SIH26003 · Proof of Concept</p>
+      <button id="reset-profile-link" class="reset-link">Reset demo profile</button>
     </div>
   </section>
 
@@ -49,20 +86,17 @@
 
     <div class="patient-body">
 
-      <!-- Tab: Games -->
       <div id="tab-games" class="tab-pane active">
         <p class="pane-hint">Match the picture to its sound. Round <span id="game-round">1</span>.</p>
         <div id="game-board" class="game-board"></div>
         <p id="game-status" class="game-status"></p>
       </div>
 
-      <!-- Tab: Tasks -->
       <div id="tab-tasks" class="tab-pane">
         <p class="pane-hint">Today's routine — tap when done.</p>
         <ul id="task-list" class="task-list"></ul>
       </div>
 
-      <!-- Tab: Memories & Songs -->
       <div id="tab-memories" class="tab-pane">
         <p class="pane-hint">A little something to make you smile.</p>
         <div class="memory-grid">
@@ -109,7 +143,7 @@
     <div class="pin-wrap">
       <button class="back-btn" data-goto="landing">← Back</button>
       <h2>Caregiver Access</h2>
-      <p class="pane-hint">Enter the 4-digit PIN (demo: 1234)</p>
+      <p class="pane-hint">Enter the caregiver PIN</p>
       <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="••••" />
       <button id="pin-submit" class="primary-btn">Unlock Dashboard</button>
       <p id="pin-error" class="pin-error"></p>
@@ -124,7 +158,7 @@
     </header>
 
     <div class="dash-body">
-      <p class="dash-name">Tracking: <strong>Grandmother — Room 2</strong></p>
+      <p class="dash-name">Tracking: <strong id="dash-patient-name">Patient</strong></p>
 
       <div class="dash-cards">
         <div class="dash-card">
@@ -146,21 +180,47 @@
 
       <h3 class="dash-subhead">Missed today</h3>
       <ul id="dash-missed" class="dash-missed"></ul>
+
+      <h3 class="dash-subhead">Manage Tasks</h3>
+      <ul id="task-manager" class="task-manager"></ul>
+      <div class="add-task-form">
+        <input id="new-task-label" class="text-input" type="text" placeholder="New task name" />
+        <select id="new-task-icon" class="icon-select">
+          <option value="💊">💊 Medicine</option>
+          <option value="💧">💧 Hydration</option>
+          <option value="🚶">🚶 Activity</option>
+          <option value="🩺">🩺 Appointment</option>
+          <option value="🗒️">🗒️ Other</option>
+        </select>
+        <input id="new-task-time" class="time-input" type="time" />
+        <button id="add-task-btn" class="primary-btn small">Add Task</button>
+      </div>
+
+      <h3 class="dash-subhead">Personalize Game Photos</h3>
+      <p class="pane-hint">Upload 4–6 family photos to replace the game icons.</p>
+      <input id="photo-upload-input" type="file" accept="image/*" multiple />
+      <div id="photo-preview" class="photo-preview-grid"></div>
+      <button id="clear-photos-btn" class="back-btn">Reset to default icons</button>
     </div>
   </section>
 
 </main>
 
 <script src="js/voice.js"></script>
-<script src="js/game.js"></script>
+<script src="js/profile.js"></script>
 <script src="js/tasks.js"></script>
+<script src="js/reminders.js"></script>
+<script src="js/game.js"></script>
 <script src="js/memories.js"></script>
 <script src="js/caregiver.js"></script>
 <script src="js/app.js"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("sw.js").catch((err) => console.warn("SW registration failed:", err));
+      navigator.serviceWorker.register("sw.js").then(
+        (reg) => console.log("[sw] registered, scope:", reg.scope),
+        (err) => console.warn("[sw] registration failed:", err)
+      );
     });
   }
 </script>

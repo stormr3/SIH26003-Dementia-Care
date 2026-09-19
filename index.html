@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>Sahayak — Cognitive Care for NER</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- Floating voice-guidance button, visible on every screen except the very first choice -->
+<button id="voice-btn" class="voice-btn hidden" aria-label="Read this screen aloud">🔊</button>
+
+<main id="app">
+
+  <!-- ============ LANDING: role selection ============ -->
+  <section id="screen-landing" class="screen active">
+    <div class="landing-wrap">
+      <div class="brand">
+        <span class="brand-mark">◆</span>
+        <h1>Sahayak</h1>
+        <p class="tagline">Cognitive care, close to home</p>
+      </div>
+      <div class="role-choice">
+        <button class="role-card role-patient" data-goto="patient">
+          <span class="role-icon">🧓</span>
+          <span class="role-title">I am the Patient</span>
+          <span class="role-sub">Play, remember, feel good</span>
+        </button>
+        <button class="role-card role-caregiver" data-goto="caregiver-pin">
+          <span class="role-icon">🩺</span>
+          <span class="role-title">I am a Caregiver</span>
+          <span class="role-sub">Track progress &amp; alerts</span>
+        </button>
+      </div>
+      <p class="ps-tag">SIH26003 · Proof of Concept</p>
+    </div>
+  </section>
+
+  <!-- ============ PATIENT: shared shell with 3 tabs ============ -->
+  <section id="screen-patient" class="screen">
+    <header class="patient-topbar">
+      <button class="back-btn" data-goto="landing">← Switch</button>
+      <h2 id="patient-heading">Play Games</h2>
+    </header>
+
+    <div class="patient-body">
+
+      <!-- Tab: Games -->
+      <div id="tab-games" class="tab-pane active">
+        <p class="pane-hint">Match the picture to its sound. Round <span id="game-round">1</span>.</p>
+        <div id="game-board" class="game-board"></div>
+        <p id="game-status" class="game-status"></p>
+      </div>
+
+      <!-- Tab: Tasks -->
+      <div id="tab-tasks" class="tab-pane">
+        <p class="pane-hint">Today's routine — tap when done.</p>
+        <ul id="task-list" class="task-list"></ul>
+      </div>
+
+      <!-- Tab: Memories & Songs -->
+      <div id="tab-memories" class="tab-pane">
+        <p class="pane-hint">A little something to make you smile.</p>
+        <div class="memory-grid">
+          <button class="memory-card" data-say="Playing a voice message from your daughter, Rina.">
+            <span class="memory-icon">🎙️</span>
+            <span>Voice from Rina</span>
+          </button>
+          <button class="memory-card" data-say="Here are your favourite photographs from last Bihu.">
+            <span class="memory-icon">📷</span>
+            <span>Bihu Photos</span>
+          </button>
+          <button class="memory-card" data-say="Playing your favourite Bihu song.">
+            <span class="memory-icon">🎵</span>
+            <span>Bihu Song</span>
+          </button>
+        </div>
+
+        <p class="pane-hint mood-hint">How are you feeling right now?</p>
+        <div class="mood-row">
+          <button class="mood-btn" data-mood="happy" aria-label="Happy">😊</button>
+          <button class="mood-btn" data-mood="okay" aria-label="Okay">😐</button>
+          <button class="mood-btn" data-mood="low" aria-label="Low">😔</button>
+        </div>
+        <p id="mood-confirm" class="mood-confirm"></p>
+      </div>
+
+    </div>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-tab="games">
+        <span class="nav-icon">🎮</span><span>Games</span>
+      </button>
+      <button class="nav-btn" data-tab="tasks">
+        <span class="nav-icon">✅</span><span>Tasks</span>
+      </button>
+      <button class="nav-btn" data-tab="memories">
+        <span class="nav-icon">💗</span><span>Memories</span>
+      </button>
+    </nav>
+  </section>
+
+  <!-- ============ CAREGIVER: PIN gate ============ -->
+  <section id="screen-caregiver-pin" class="screen">
+    <div class="pin-wrap">
+      <button class="back-btn" data-goto="landing">← Back</button>
+      <h2>Caregiver Access</h2>
+      <p class="pane-hint">Enter the 4-digit PIN (demo: 1234)</p>
+      <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="••••" />
+      <button id="pin-submit" class="primary-btn">Unlock Dashboard</button>
+      <p id="pin-error" class="pin-error"></p>
+    </div>
+  </section>
+
+  <!-- ============ CAREGIVER: dashboard ============ -->
+  <section id="screen-caregiver-dashboard" class="screen">
+    <header class="patient-topbar">
+      <button class="back-btn" data-goto="landing">← Switch</button>
+      <h2>Caregiver Dashboard</h2>
+    </header>
+
+    <div class="dash-body">
+      <p class="dash-name">Tracking: <strong>Grandmother — Room 2</strong></p>
+
+      <div class="dash-cards">
+        <div class="dash-card">
+          <span class="dash-label">Tasks done today</span>
+          <span id="dash-tasks" class="dash-value">0 / 4</span>
+        </div>
+        <div class="dash-card">
+          <span class="dash-label">Last game accuracy</span>
+          <span id="dash-accuracy" class="dash-value">—</span>
+        </div>
+        <div class="dash-card">
+          <span class="dash-label">Mood today</span>
+          <span id="dash-mood" class="dash-value">—</span>
+        </div>
+      </div>
+
+      <h3 class="dash-subhead">7-day cognitive accuracy trend</h3>
+      <svg id="dash-chart" class="dash-chart" viewBox="0 0 320 140" preserveAspectRatio="none"></svg>
+
+      <h3 class="dash-subhead">Missed today</h3>
+      <ul id="dash-missed" class="dash-missed"></ul>
+    </div>
+  </section>
+
+</main>
+
+<script src="js/voice.js"></script>
+<script src="js/game.js"></script>
+<script src="js/tasks.js"></script>
+<script src="js/memories.js"></script>
+<script src="js/caregiver.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

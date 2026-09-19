@@ -1,0 +1,397 @@
+:root {
+  --bg: #F4F7F1;
+  --surface: #FFFFFF;
+  --ink: #1F2E28;
+  --ink-soft: #56645D;
+  --teal: #2C6E63;
+  --teal-dark: #1E4E45;
+  --ochre: #D9A441;
+  --indigo: #4A5B8C;
+  --indigo-dark: #37436B;
+  --danger: #B4543A;
+  --radius: 18px;
+  --shadow: 0 6px 18px rgba(31, 46, 40, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Noto Sans", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--bg);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen { display: none; flex: 1; }
+.screen.active { display: flex; flex-direction: column; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+/* ---------- Landing ---------- */
+.landing-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 24px;
+  gap: 36px;
+  text-align: center;
+}
+
+.brand-mark {
+  display: inline-block;
+  color: var(--ochre);
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 34px;
+  color: var(--teal-dark);
+  letter-spacing: 0.2px;
+}
+
+.tagline {
+  margin: 6px 0 0;
+  color: var(--ink-soft);
+  font-size: 17px;
+}
+
+.role-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+}
+
+.role-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 26px 20px;
+  box-shadow: var(--shadow);
+  border: 2px solid transparent;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.role-card:active { transform: scale(0.98); }
+.role-patient { border-color: rgba(44, 110, 99, 0.25); }
+.role-caregiver { border-color: rgba(74, 91, 140, 0.25); }
+
+.role-icon { font-size: 40px; }
+.role-title { font-size: 21px; font-weight: 600; color: var(--ink); }
+.role-sub { font-size: 15px; color: var(--ink-soft); }
+
+.ps-tag {
+  color: var(--ink-soft);
+  font-size: 13px;
+  opacity: 0.7;
+  margin: 0;
+}
+
+/* ---------- Shared top bar ---------- */
+.patient-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px 8px;
+  background: var(--bg);
+}
+
+.patient-topbar h2 {
+  margin: 0;
+  font-size: 22px;
+  color: var(--teal-dark);
+}
+
+.back-btn {
+  font-size: 15px;
+  color: var(--ink-soft);
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  flex-shrink: 0;
+}
+
+/* ---------- Patient body / tabs ---------- */
+.patient-body {
+  flex: 1;
+  padding: 12px 20px 100px;
+  overflow-y: auto;
+}
+
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+.pane-hint {
+  color: var(--ink-soft);
+  font-size: 16px;
+  margin: 6px 0 18px;
+}
+
+/* Bottom nav */
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  background: var(--surface);
+  box-shadow: 0 -4px 16px rgba(31,46,40,0.10);
+  padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  z-index: 20;
+}
+
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 14px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.nav-btn.active { color: var(--teal-dark); background: rgba(44,110,99,0.09); }
+.nav-icon { font-size: 24px; }
+
+/* ---------- Games ---------- */
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.card-tile {
+  aspect-ratio: 1;
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+}
+
+.card-tile.face-down { background: var(--teal); color: transparent; }
+.card-tile.matched { background: rgba(217,164,65,0.25); }
+.card-tile.wrong { background: rgba(180,84,58,0.18); }
+
+.game-status {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 17px;
+  color: var(--teal-dark);
+  font-weight: 600;
+  min-height: 24px;
+}
+
+/* ---------- Tasks ---------- */
+.task-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+}
+
+.task-check {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--teal);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.task-item.done .task-check { background: var(--teal); color: white; }
+.task-item.done .task-label { text-decoration: line-through; color: var(--ink-soft); }
+.task-label { font-size: 17px; }
+
+/* ---------- Memories ---------- */
+.memory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.memory-card {
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--ink);
+}
+
+.memory-icon { font-size: 28px; }
+.mood-hint { margin-top: 26px; }
+
+.mood-row { display: flex; gap: 14px; justify-content: center; }
+.mood-btn {
+  font-size: 36px;
+  background: var(--surface);
+  border-radius: 50%;
+  width: 68px;
+  height: 68px;
+  box-shadow: var(--shadow);
+}
+
+.mood-confirm { text-align: center; color: var(--teal-dark); font-weight: 600; margin-top: 14px; min-height: 22px; }
+
+/* ---------- Caregiver PIN ---------- */
+.pin-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.pin-wrap h2 { color: var(--indigo-dark); margin: 6px 0 0; }
+.pin-wrap .back-btn { align-self: flex-start; }
+
+.pin-input {
+  font-size: 30px;
+  letter-spacing: 14px;
+  text-align: center;
+  width: 200px;
+  padding: 14px 10px;
+  border-radius: 14px;
+  border: 2px solid var(--indigo);
+  background: var(--surface);
+  margin-top: 10px;
+}
+
+.primary-btn {
+  background: var(--indigo);
+  color: white;
+  font-size: 17px;
+  font-weight: 600;
+  padding: 14px 28px;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.pin-error { color: var(--danger); font-size: 14px; min-height: 20px; margin: 0; }
+
+/* ---------- Caregiver dashboard ---------- */
+.dash-body { padding: 8px 20px 40px; flex: 1; overflow-y: auto; }
+.dash-name { color: var(--ink-soft); font-size: 15px; }
+
+.dash-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 10px 0 24px;
+}
+
+.dash-card {
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+
+.dash-label { font-size: 12px; color: var(--ink-soft); }
+.dash-value { font-size: 20px; font-weight: 700; color: var(--indigo-dark); }
+
+.dash-subhead { font-size: 16px; color: var(--indigo-dark); margin: 18px 0 8px; }
+
+.dash-chart {
+  width: 100%;
+  height: 140px;
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.dash-missed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dash-missed li {
+  background: rgba(180,84,58,0.10);
+  color: var(--danger);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 15px;
+}
+
+.dash-missed .none-missed {
+  background: rgba(44,110,99,0.10);
+  color: var(--teal-dark);
+}
+
+/* ---------- Voice button ---------- */
+.voice-btn {
+  position: fixed;
+  top: 16px;
+  right: max(16px, calc(50% - 240px + 16px));
+  z-index: 30;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--ochre);
+  color: white;
+  font-size: 22px;
+  box-shadow: var(--shadow);
+}
+
+.voice-btn.hidden { display: none; }
+
+@media (min-width: 481px) {
+  .voice-btn { right: calc(50% - 240px + 16px); }
+}

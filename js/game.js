@@ -3,6 +3,13 @@
 // (accuracy threshold -> round change). Production version replaces
 // this with the Adaptive Behaviour Engine (tap latency, hesitation,
 // error clustering) described in the problem statement.
+//
+// ACCURACY DEFINITION (important):
+// A wrong guess only counts against you if you'd already seen the
+// matching tile at some earlier point in the round — i.e. you had
+// the information and failed to recall it. A wrong guess on tiles
+// you're seeing for the very first time is exploration, not a
+// memory failure, and does not lower accuracy.
 
 const Game = (() => {
   const ICON_POOL = [
@@ -21,8 +28,10 @@ const Game = (() => {
 
   let board = [];
   let flippedIndices = [];
+  let seenIndices = new Set(); // tiles revealed at least once in a PREVIOUS turn
   let matchedCount = 0;
   let moves = 0;
+  let recallMisses = 0; // wrong guesses where the match was already known
   let lockBoard = false;
 
   const boardEl = () => document.getElementById("game-board");
@@ -51,7 +60,6 @@ const Game = (() => {
   function render() {
     const el = boardEl();
     el.innerHTML = "";
-    el.style.gridTemplateColumns = round >= 2 ? "repeat(4, 1fr)" : "repeat(4, 1fr)";
     board.forEach((card, idx) => {
       const tile = document.createElement("button");
       tile.className = "card-tile face-down";
@@ -77,24 +85,45 @@ const Game = (() => {
       moves++;
       lockBoard = true;
       const [a, b] = flippedIndices;
-      if (board[a].icon === board[b].icon) {
+      const isMatch = board[a].icon === board[b].icon;
+
+      if (isMatch) {
         setTimeout(() => {
           markMatched(a);
           markMatched(b);
           matchedCount += 2;
+          seenIndices.add(a);
+          seenIndices.add(b);
           flippedIndices = [];
           lockBoard = false;
           if (matchedCount === board.length) finishRound();
         }, 350);
       } else {
+        // Was the match for EITHER flipped card already known from a
+        // previous turn? If so, this wrong guess is a real recall miss.
+        const knewA = seenIndices.has(a) || wasIconSeenElsewhere(board[a].icon, a);
+        const knewB = seenIndices.has(b) || wasIconSeenElsewhere(board[b].icon, b);
+        if (knewA || knewB) recallMisses++;
+
         setTimeout(() => {
           hideTile(a);
           hideTile(b);
+          seenIndices.add(a);
+          seenIndices.add(b);
           flippedIndices = [];
           lockBoard = false;
         }, 700);
       }
     }
+  }
+
+  // True if some OTHER tile with the same icon was already revealed
+  // in an earlier turn (i.e. the player had a chance to remember it).
+  function wasIconSeenElsewhere(icon, excludeIdx) {
+    for (const seenIdx of seenIndices) {
+      if (seenIdx !== excludeIdx && board[seenIdx].icon === icon) return true;
+    }
+    return false;
   }
 
   function revealTile(idx) {
@@ -118,13 +147,16 @@ const Game = (() => {
 
   function finishRound() {
     const pairs = board.length / 2;
-    const accuracy = Math.max(0, Math.min(100, Math.round((pairs / moves) * 100)));
+    // Accuracy now reflects recall quality, not raw guess count:
+    // every pair you matched counts as a success; every recall miss
+    // (a wrong guess where you'd already seen the match) counts against it.
+    const accuracy = Math.round((pairs / (pairs + recallMisses)) * 100);
 
-    logSession(accuracy);
+    logSession(accuracy, pairs);
     Voice.speak(`Well done! You matched everything. Accuracy ${accuracy} percent.`);
     statusEl().textContent = `Well done! Accuracy: ${accuracy}%`;
 
-    // Hardcoded adaptive rule: strong performance -> harder next round.
+    // Hardcoded adaptive rule: strong recall -> harder next round.
     if (accuracy >= 70 && round < MAX_ROUND) {
       round++;
     } else if (accuracy < 40 && round > 1) {
@@ -135,17 +167,26 @@ const Game = (() => {
     setTimeout(startRound, 2200);
   }
 
-  function logSession(accuracy) {
+  function logSession(accuracy, pairs) {
     const history = JSON.parse(localStorage.getItem("gameHistory") || "[]");
-    history.push({ date: new Date().toISOString(), round, moves, accuracy });
+    history.push({
+      date: new Date().toISOString(),
+      round,
+      moves,
+      pairs,
+      recallMisses,
+      accuracy,
+    });
     localStorage.setItem("gameHistory", JSON.stringify(history.slice(-14)));
   }
 
   function startRound() {
     board = buildDeck();
     flippedIndices = [];
+    seenIndices = new Set();
     matchedCount = 0;
     moves = 0;
+    recallMisses = 0;
     lockBoard = false;
     render();
   }

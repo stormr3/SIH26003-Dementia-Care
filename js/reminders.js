@@ -51,7 +51,7 @@ const Reminders = (() => {
     if (document.visibilityState === "visible") {
       showToast(`${task.icon} ${message}`);
     } else if ("Notification" in window && Notification.permission === "granted") {
-      new Notification("Sahayak Reminder", { body: message, icon: "icons/icon-192.png" });
+      new Notification("Smriti Reminder", { body: message, icon: "icons/icon-192.png" });
     }
   }
 

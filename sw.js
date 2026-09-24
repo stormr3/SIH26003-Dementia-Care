@@ -4,7 +4,7 @@
 // the piece that turns "offline-first" from a slide claim into a thing
 // you can demo live by toggling airplane mode.
 
-const CACHE_NAME = "sahayak-poc-v2";
+const CACHE_NAME = "smriti-poc-v4";
 
 const ASSETS = [
   "./",
@@ -19,7 +19,7 @@ const ASSETS = [
   "./js/reminders.js",
   "./js/memories.js",
   "./js/caregiver.js",
-  "./icons/icon.svg",
+  "./icons/logo.png",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
 ];

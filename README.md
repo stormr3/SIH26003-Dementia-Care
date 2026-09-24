@@ -1,4 +1,6 @@
-# Sahayak — SIH26003 Proof of Concept
+# Smriti — SIH26003 Proof of Concept
+
+**Team:** CTRL_FREAKS
 
 Cognitive care companion for elderly dementia patients in the North Eastern Region — patient portal (games, tasks, memories) + caregiver dashboard.
 

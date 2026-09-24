@@ -57,10 +57,11 @@ button {
   text-align: center;
 }
 
-.brand-mark {
+.brand-mark-logo {
   display: inline-block;
-  color: var(--ochre);
-  font-size: 22px;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
   margin-bottom: 4px;
 }
 

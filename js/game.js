@@ -30,7 +30,8 @@ const Game = (() => {
   ];
 
   const MIN_CUSTOM_PHOTOS = 4;
-  const MAX_ROUND = 2;
+  const MAX_ROUND = 4;
+  const ROUND_PAIRS = { 1: 3, 2: 4, 3: 5, 4: 6 };
   let round = parseInt(localStorage.getItem("gameRound") || "1", 10);
 
   let board = [];
@@ -76,7 +77,7 @@ const Game = (() => {
   }
 
   function buildDeck() {
-    const pairCount = round >= 2 ? 6 : 4;
+    const pairCount = ROUND_PAIRS[round] || ROUND_PAIRS[MAX_ROUND];
     const source = buildSourceSet(pairCount);
     const deck = shuffle([...source, ...source]).map((item, idx) => ({
       ...item,
@@ -89,6 +90,7 @@ const Game = (() => {
   function render() {
     const el = boardEl();
     el.innerHTML = "";
+    el.style.gridTemplateColumns = board.length <= 6 ? "repeat(3, 1fr)" : "repeat(4, 1fr)";
     board.forEach((card, idx) => {
       const tile = document.createElement("button");
       tile.className = "card-tile face-down";
